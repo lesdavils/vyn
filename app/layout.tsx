@@ -15,10 +15,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Vyn — Votre page, tous vos liens",
   description: "Créez votre page de liens personnelle en quelques secondes.",
-  icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
-  },
 };
 
 export default function RootLayout({
