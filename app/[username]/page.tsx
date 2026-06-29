@@ -34,18 +34,9 @@ export default async function ProfilePage({ params }: Props) {
     <div className="min-h-screen bg-[#0c0c0c] text-[#e8e8e8] flex flex-col items-center justify-start px-4 py-20">
       <div className="w-full max-w-sm flex flex-col items-center">
 
-        {/* Avatar */}
-        {profile.avatar_url ? (
-          <img
-            src={profile.avatar_url}
-            alt={profile.name}
-            className="w-20 h-20 rounded-full object-cover border border-[#1a1a1a] mb-5"
-          />
-        ) : (
-          <div className="w-20 h-20 rounded-full bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-xl font-bold text-[#555] mb-5">
-            {initials}
-          </div>
-        )}
+        <div className="w-20 h-20 rounded-full bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-xl font-bold text-[#555] mb-5">
+          {initials}
+        </div>
 
         <h1 className="text-xl font-bold text-white mb-1">{profile.name ?? profile.username}</h1>
         {profile.bio && (

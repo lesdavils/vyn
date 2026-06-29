@@ -2,13 +2,13 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/browser'
 import { PlatformIcon, detectPlatform } from '@/lib/platforms'
 
-type Profile = { id: string; username: string; name: string; bio: string; avatar_url: string }
+type Profile = { id: string; username: string; name: string; bio: string }
 type LinkRow = { id: string; title: string; url: string; position: number }
 
 export default function Admin() {
@@ -16,15 +16,12 @@ export default function Admin() {
   const [links, setLinks] = useState<LinkRow[]>([])
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
-  const [avatarUrl, setAvatarUrl] = useState('')
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [addingLink, setAddingLink] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [saved, setSaved] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -39,30 +36,12 @@ export default function Admin() {
       setProfile(p)
       setName(p.name ?? '')
       setBio(p.bio ?? '')
-      setAvatarUrl(p.avatar_url ?? '')
 
       const { data: l } = await supabase.from('links').select('*').eq('profile_id', user.id).order('position')
       setLinks(l ?? [])
     }
     load()
   }, [])
-
-  const uploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file || !profile) return
-    setUploadingAvatar(true)
-
-    const ext = file.name.split('.').pop()
-    const path = `${profile.id}/avatar.${ext}`
-
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
-    if (error) { setUploadingAvatar(false); return }
-
-    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
-    await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', profile.id)
-    setAvatarUrl(data.publicUrl)
-    setUploadingAvatar(false)
-  }
 
   const saveProfile = async () => {
     if (!profile) return
@@ -130,25 +109,8 @@ export default function Admin() {
           <p className="text-[10px] text-[#444] uppercase tracking-widest mb-6">Profil</p>
 
           <div className="flex items-start gap-6 mb-5">
-            {/* Avatar upload */}
-            <div
-              className="relative cursor-pointer shrink-0 group"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover border border-[#222]" />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-lg font-bold text-[#555]">
-                  {initials}
-                </div>
-              )}
-              <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                {uploadingAvatar
-                  ? <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>
-                  : <span className="text-white text-[10px] font-medium">Changer</span>
-                }
-              </div>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={uploadAvatar} />
+            <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-lg font-bold text-[#555] shrink-0">
+              {initials}
             </div>
 
             <div className="flex-1 flex flex-col gap-2.5">
@@ -227,9 +189,7 @@ export default function Admin() {
               <div className="flex gap-2">
                 <input
                   value={newTitle}
-                  onChange={(e) => {
-                    setNewTitle(e.target.value)
-                  }}
+                  onChange={(e) => setNewTitle(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addLink()}
                   placeholder={detectPlatform(newUrl)?.name ?? 'Titre du lien'}
                   className="flex-1 border border-[#222] rounded-xl bg-[#0f0f0f] px-4 py-3 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
