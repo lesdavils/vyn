@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { PlatformIcon } from '@/lib/platforms'
 
 type Props = { params: Promise<{ username: string }> }
 
@@ -46,7 +47,6 @@ export default async function ProfilePage({ params }: Props) {
           </div>
         )}
 
-        {/* Name + bio */}
         <h1 className="text-xl font-bold text-white mb-1">{profile.name ?? profile.username}</h1>
         {profile.bio && (
           <p className="text-sm text-[#555] text-center max-w-xs mb-8 leading-relaxed">{profile.bio}</p>
@@ -54,16 +54,20 @@ export default async function ProfilePage({ params }: Props) {
         {!profile.bio && <div className="mb-8" />}
 
         {/* Links */}
-        <div className="w-full flex flex-col gap-3">
+        <div className="w-full flex flex-col gap-2.5">
           {(links ?? []).map((link) => (
             <a
               key={link.id}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full border border-[#1e1e1e] rounded-xl px-5 py-4 text-sm text-center text-[#e8e8e8] bg-[#0f0f0f] hover:bg-[#141414] hover:border-[#2a2a2a] transition-all duration-200"
+              className="w-full border border-[#1e1e1e] rounded-xl px-5 py-4 flex items-center gap-3 bg-[#0f0f0f] hover:bg-[#141414] hover:border-[#2a2a2a] transition-all duration-200 group"
             >
-              {link.title}
+              <span className="text-[#555] group-hover:text-[#888] transition-colors shrink-0">
+                <PlatformIcon url={link.url} size={15} />
+              </span>
+              <span className="flex-1 text-sm text-center text-[#e8e8e8]">{link.title}</span>
+              <span className="w-[15px] shrink-0" />
             </a>
           ))}
           {(links ?? []).length === 0 && (
@@ -71,7 +75,6 @@ export default async function ProfilePage({ params }: Props) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="mt-16">
           <Link href="/" className="text-xs text-[#2a2a2a] hover:text-[#555] transition-colors">
             Créer ma page sur Vyn

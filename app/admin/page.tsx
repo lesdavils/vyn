@@ -2,10 +2,11 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/browser'
+import { PlatformIcon, detectPlatform } from '@/lib/platforms'
 
 type Profile = { id: string; username: string; name: string; bio: string; avatar_url: string }
 type LinkRow = { id: string; title: string; url: string; position: number }
@@ -16,12 +17,14 @@ export default function Admin() {
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newUrl, setNewUrl] = useState('')
   const [saving, setSaving] = useState(false)
   const [addingLink, setAddingLink] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [saved, setSaved] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -44,10 +47,27 @@ export default function Admin() {
     load()
   }, [])
 
+  const uploadAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !profile) return
+    setUploadingAvatar(true)
+
+    const ext = file.name.split('.').pop()
+    const path = `${profile.id}/avatar.${ext}`
+
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (error) { setUploadingAvatar(false); return }
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', profile.id)
+    setAvatarUrl(data.publicUrl)
+    setUploadingAvatar(false)
+  }
+
   const saveProfile = async () => {
     if (!profile) return
     setSaving(true)
-    await supabase.from('profiles').update({ name, bio, avatar_url: avatarUrl }).eq('id', profile.id)
+    await supabase.from('profiles').update({ name, bio }).eq('id', profile.id)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
@@ -80,6 +100,9 @@ export default function Admin() {
     router.push('/')
   }
 
+  const initials = (name || profile?.username || '?')
+    .split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
+
   if (!profile) return (
     <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
       <p className="text-[#333] text-sm">Chargement...</p>
@@ -105,36 +128,55 @@ export default function Admin() {
         {/* Profile */}
         <section>
           <p className="text-[10px] text-[#444] uppercase tracking-widest mb-6">Profil</p>
-          <div className="flex flex-col gap-3">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Votre nom"
-              className="w-full border border-[#222] rounded-xl bg-[#0f0f0f] px-5 py-4 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
-            />
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Bio (optionnel)"
-              rows={2}
-              className="w-full border border-[#222] rounded-xl bg-[#0f0f0f] px-5 py-3 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors resize-none"
-            />
-            <input
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="URL de votre avatar (optionnel)"
-              className="w-full border border-[#222] rounded-xl bg-[#0f0f0f] px-5 py-4 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
-            />
-            <div className="flex items-center gap-3">
-              <button
-                onClick={saveProfile}
-                disabled={saving}
-                className="bg-white text-black px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#e8e8e8] disabled:opacity-30 transition-colors"
-              >
-                {saving ? 'Sauvegarde...' : saved ? '✓ Sauvegardé' : 'Sauvegarder'}
-              </button>
-              <span className="text-xs text-[#444]">vyn.app/{profile.username}</span>
+
+          <div className="flex items-start gap-6 mb-5">
+            {/* Avatar upload */}
+            <div
+              className="relative cursor-pointer shrink-0 group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover border border-[#222]" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-[#1a1a1a] border border-[#222] flex items-center justify-center text-lg font-bold text-[#555]">
+                  {initials}
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploadingAvatar
+                  ? <svg className="animate-spin w-4 h-4 text-white" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>
+                  : <span className="text-white text-[10px] font-medium">Changer</span>
+                }
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={uploadAvatar} />
             </div>
+
+            <div className="flex-1 flex flex-col gap-2.5">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Votre nom"
+                className="w-full border border-[#222] rounded-xl bg-[#0f0f0f] px-4 py-3 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
+              />
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Bio (optionnel)"
+                rows={2}
+                className="w-full border border-[#222] rounded-xl bg-[#0f0f0f] px-4 py-3 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={saveProfile}
+              disabled={saving}
+              className="bg-white text-black px-5 py-2.5 rounded-lg text-xs font-semibold hover:bg-[#e8e8e8] disabled:opacity-30 transition-colors"
+            >
+              {saving ? 'Sauvegarde...' : saved ? '✓ Sauvegardé' : 'Sauvegarder'}
+            </button>
+            <span className="text-xs text-[#444]">vyn.app/{profile.username}</span>
           </div>
         </section>
 
@@ -150,13 +192,16 @@ export default function Admin() {
             )}
             {links.map((link) => (
               <div key={link.id} className="flex items-center gap-3 border border-[#1a1a1a] rounded-xl px-4 py-3 bg-[#0f0f0f] group">
+                <div className="w-5 h-5 flex items-center justify-center text-[#555] shrink-0">
+                  <PlatformIcon url={link.url} size={14} />
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-[#e8e8e8] truncate">{link.title}</p>
                   <p className="text-xs text-[#444] truncate font-mono">{link.url}</p>
                 </div>
                 <button
                   onClick={() => deleteLink(link.id)}
-                  className="text-[#333] hover:text-red-500 transition-colors text-xs opacity-0 group-hover:opacity-100"
+                  className="text-[#333] hover:text-red-500 transition-colors text-xs opacity-0 group-hover:opacity-100 shrink-0"
                 >
                   Supprimer
                 </button>
@@ -166,20 +211,28 @@ export default function Admin() {
 
           {showAddForm && (
             <div className="flex flex-col gap-2 mb-3">
-              <input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Titre du lien"
-                autoFocus
-                className="w-full border border-[#222] rounded-xl bg-[#0f0f0f] px-5 py-4 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
-              />
-              <div className="flex gap-2">
+              <div className="flex border border-[#222] rounded-xl overflow-hidden bg-[#0f0f0f] focus-within:border-[#333] transition-colors">
+                <div className="w-10 flex items-center justify-center text-[#444] shrink-0">
+                  {newUrl ? <PlatformIcon url={newUrl} size={14} /> : <span className="text-[#2a2a2a] text-xs">↗</span>}
+                </div>
                 <input
                   value={newUrl}
                   onChange={(e) => setNewUrl(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addLink()}
-                  placeholder="https://..."
-                  className="flex-1 border border-[#222] rounded-xl bg-[#0f0f0f] px-5 py-4 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
+                  placeholder="https://instagram.com/monprofil"
+                  autoFocus
+                  className="flex-1 bg-transparent py-4 text-sm focus:outline-none placeholder-[#333] text-[#e8e8e8]"
+                />
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={newTitle}
+                  onChange={(e) => {
+                    setNewTitle(e.target.value)
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && addLink()}
+                  placeholder={detectPlatform(newUrl)?.name ?? 'Titre du lien'}
+                  className="flex-1 border border-[#222] rounded-xl bg-[#0f0f0f] px-4 py-3 text-sm focus:outline-none focus:border-[#333] placeholder-[#333] text-[#e8e8e8] transition-colors"
                 />
                 <button
                   onClick={addLink}
@@ -193,7 +246,7 @@ export default function Admin() {
           )}
 
           <button
-            onClick={() => setShowAddForm(v => !v)}
+            onClick={() => { setShowAddForm(v => !v); setNewTitle(''); setNewUrl('') }}
             className="text-xs text-[#444] hover:text-[#888] transition-colors"
           >
             {showAddForm ? '− Annuler' : '+ Ajouter un lien'}
