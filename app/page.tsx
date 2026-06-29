@@ -5,7 +5,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#0c0c0c] text-[#e8e8e8] flex flex-col">
 
       <nav className="flex items-center justify-between px-8 py-6 max-w-5xl mx-auto w-full">
-        <img src="/logo.png" alt="Vyn" className="h-7" />
+        <img src="/logo.png" alt="Vyn" className="h-12" />
         <div className="flex items-center gap-8 text-sm text-[#666]">
           <Link href="/login" className="hover:text-[#e8e8e8] transition-colors">Connexion</Link>
           <Link href="/register" className="bg-white text-black px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[#e8e8e8] transition-colors">
