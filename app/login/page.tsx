@@ -19,6 +19,7 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) return setError('Email ou mot de passe incorrect')
+    router.refresh()
     router.push('/admin')
   }
 
