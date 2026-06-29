@@ -57,7 +57,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-[#0c0c0c] text-[#e8e8e8] flex flex-col">
       <nav className="flex items-center justify-between px-8 py-6 max-w-5xl mx-auto w-full">
-        <Link href="/" className="text-sm font-semibold tracking-wide text-white">Vyn</Link>
+        <Link href="/"><img src="/logo.png" alt="Vyn" className="h-7" /></Link>
       </nav>
       <div className="h-px bg-[#1a1a1a] max-w-5xl mx-auto w-full" />
 

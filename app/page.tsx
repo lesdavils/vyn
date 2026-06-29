@@ -5,7 +5,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#0c0c0c] text-[#e8e8e8] flex flex-col">
 
       <nav className="flex items-center justify-between px-8 py-6 max-w-5xl mx-auto w-full">
-        <span className="text-sm font-semibold tracking-wide text-white">Vyn</span>
+        <img src="/logo.png" alt="Vyn" className="h-7" />
         <div className="flex items-center gap-8 text-sm text-[#666]">
           <Link href="/login" className="hover:text-[#e8e8e8] transition-colors">Connexion</Link>
           <Link href="/register" className="bg-white text-black px-4 py-2 rounded-lg text-xs font-semibold hover:bg-[#e8e8e8] transition-colors">
@@ -44,7 +44,7 @@ export default function Home() {
 
       <div className="h-px bg-[#1a1a1a] max-w-5xl mx-auto w-full" />
       <footer className="max-w-5xl mx-auto w-full px-8 py-5 flex items-center justify-between text-xs text-[#333]">
-        <span>Vyn</span>
+        <img src="/logo.png" alt="Vyn" className="h-5 opacity-40" />
         <a href="https://github.com/lesdavils/vyn" target="_blank" rel="noopener noreferrer" className="hover:text-[#666] transition-colors">GitHub →</a>
       </footer>
     </div>

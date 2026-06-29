@@ -112,7 +112,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-[#0c0c0c] text-[#e8e8e8] flex flex-col">
       <nav className="flex items-center justify-between px-8 py-6 max-w-3xl mx-auto w-full">
-        <span className="text-sm font-semibold text-white">Vyn</span>
+        <img src="/logo.png" alt="Vyn" className="h-7" />
         <div className="flex items-center gap-5 text-xs text-[#555]">
           <Link href={`/${profile.username}`} target="_blank" className="hover:text-[#e8e8e8] transition-colors">
             Voir ma page →
