@@ -31,20 +31,17 @@ export default function Register() {
 
     const supabase = createClient()
 
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
-    if (signUpError || !data.user) {
-      setLoading(false)
-      return setError(signUpError?.message ?? 'Erreur lors de l\'inscription')
-    }
-
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: data.user.id,
-      username: username.toLowerCase(),
-      name: username,
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username: username.toLowerCase() } },
     })
 
     setLoading(false)
-    if (profileError) return setError(profileError.message)
+
+    if (signUpError || !data.user) {
+      return setError(signUpError?.message ?? 'Erreur lors de l\'inscription')
+    }
 
     router.push('/admin')
   }
